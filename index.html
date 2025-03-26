@@ -22,7 +22,7 @@
 
     // Получаем имя пользователя из Telegram Web Apps API
     let userName = tg.initDataUnsafe?.user?.first_name || "user";
-    document.getElementById("greeting").innerText = `Рамиль лошара!`;
+    document.getElementById("greeting").innerText = `Hello, ${userName}`;
 </script>
 </body>
 </html>
