@@ -1,3 +1,8 @@
+@class
+@name GeolocationService
+@see http://www.w3.org/TR/geolocation-API/
+@see http://api.yandex.ru/maps/doc/jsapi/2.x/ref/reference/geolocation.xml
+
 let center = [48.8866527839977, 2.34310679732974];
 
 function init() {
@@ -19,6 +24,15 @@ function init() {
         navigator.geolocation.getCurrentPosition(function(position) {
             let userLocation = [position.coords.latitude, position.coords.longitude];
             map.setCenter(userLocation);
+
+            // Добавляем небольшую метку местоположения пользователя
+            let userPlacemark = new ymaps.Placemark(userLocation, {
+                balloonContent: 'Вы здесь'
+            }, {
+                preset: 'islands#circleDotIcon'
+            });
+
+            map.geoObjects.add(userPlacemark);
         });
     }
 
