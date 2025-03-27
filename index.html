@@ -5,24 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Telegram Mini App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=16a0ec63-86c0-4374-ae1b-ace81b2bbcb8&lang=ru_RU"></script>
+    <script src="script.js" defer></script>
 </head>
 <body>
-<h1 id="greeting">Hello, user</h1>
+<header class="header">
+    <h1 id="greeting" class="animated-text">Hello, User</h1>
+    <div class="search-container hidden">
+        <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+        <div class="form__group flex-container">
+            <input type="text" class="form__input" id="search-input" placeholder="Введите адрес" required="" />
+            <button id="search-button" style="--content: 'НАЙТИ';" href="https://twitter.com/kamildyrek">
+                <div class="left"></div>
+                  НАЙТИ
+                <div class="right"></div>
+            </button>
+        </div>
+    </div>
+</header>
+<div class="content hidden">
+    <div class="map" id="map"></div>
+</div>
 
 <script>
     let tg = window.Telegram.WebApp;
-    tg.expand(); // Разворачиваем Mini App
+    tg.expand();
 
-    // Получаем имя пользователя из Telegram Web Apps API
     let userName = tg.initDataUnsafe?.user?.first_name || "user";
     document.getElementById("greeting").innerText = `Hello, ${userName}`;
+
+    // Показываем контент и строку поиска после анимации текста
+    document.getElementById("greeting").addEventListener("animationend", () => {
+        document.querySelector(".search-container").classList.remove("hidden");
+        document.querySelector(".content").classList.remove("hidden");
+    });
 </script>
 </body>
 </html>
