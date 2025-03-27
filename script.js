@@ -24,15 +24,26 @@ function init() {
         navigator.geolocation.getCurrentPosition(function(position) {
             let userLocation = [position.coords.latitude, position.coords.longitude];
             map.setCenter(userLocation);
-
-            // Добавляем небольшую метку местоположения пользователя
+            
+            // Добавляем метку местоположения пользователя с динамическим масштабированием
             let userPlacemark = new ymaps.Placemark(userLocation, {
                 balloonContent: 'Вы здесь'
             }, {
-                preset: 'islands#circleDotIcon'
+                iconLayout: 'default#image',
+                iconImageHref: 'https://maps.gstatic.com/mapfiles/ms2/micons/blue-dot.png',
+                iconImageSize: [20, 20],
+                iconImageOffset: [-10, -10]
             });
-
+            
             map.geoObjects.add(userPlacemark);
+
+            // Изменяем размер метки в зависимости от масштаба карты
+            map.events.add('boundschange', function (event) {
+                let zoom = event.get('newZoom');
+                let newSize = Math.max(10, zoom * 2);
+                userPlacemark.options.set('iconImageSize', [newSize, newSize]);
+                userPlacemark.options.set('iconImageOffset', [-newSize / 2, -newSize / 2]);
+            });
         });
     }
 
