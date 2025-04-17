@@ -6,7 +6,7 @@
     <title>Telegram Mini App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="style.css">
-    <script src="https://api-maps.yandex.ru/2.1/?apikey=16a0ec63-86c0-4374-ae1b-ace81b2bbcb8&lang=ru_RU"></script>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=e76971fc-667b-4473-a84b-ef66fda07343&lang=ru_RU"></script>
     <script src="script.js" defer></script>
 </head>
 <body>
@@ -18,7 +18,7 @@
             <input type="text" class="form__input" id="search-input" placeholder="Введите адрес" required="" />
             <button id="search-button" style="--content: 'НАЙТИ';">
                 <div class="left"></div>
-                  НАЙТИ
+                НАЙТИ
                 <div class="right"></div>
             </button>
         </div>
@@ -26,6 +26,7 @@
 </header>
 <div class="content hidden">
     <div class="map" id="map"></div>
+
 </div>
 
 <script>
@@ -35,40 +36,11 @@
     let userName = tg.initDataUnsafe?.user?.first_name || "user";
     document.getElementById("greeting").innerText = `Hello, ${userName}`;
 
-    // Показываем контент и строку поиска после анимации текста
     document.getElementById("greeting").addEventListener("animationend", () => {
         document.querySelector(".search-container").classList.remove("hidden");
         document.querySelector(".content").classList.remove("hidden");
-        initMap(); // Инициализация карты после появления контента
+        ymaps.ready(init); // ИНИЦИАЛИЗАЦИЯ КАРТЫ ИЗ script.js
     });
-
-    function initMap() {
-        ymaps.ready(function() {
-            navigator.geolocation.getCurrentPosition(function(position) {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-
-                var map = new ymaps.Map("map", {
-                    center: [lat, lon],
-                    zoom: 14
-                });
-
-                // Добавляем круг (метку)
-                var circle = new ymaps.Circle([
-                    [lat, lon], 200 // Радиус 200 м
-                ], {}, {
-                    draggable: false,
-                    fillColor: "#ff000088",
-                    strokeColor: "#ff0000",
-                    strokeWidth: 2
-                });
-
-                map.geoObjects.add(circle);
-            }, function(error) {
-                console.log("Ошибка получения геолокации: ", error);
-            });
-        });
-    }
 </script>
 </body>
 </html>
