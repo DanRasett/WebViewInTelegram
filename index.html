@@ -6,8 +6,10 @@
     <title>Telegram Mini App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
     <script src="https://api-maps.yandex.ru/2.1/?apikey=e76971fc-667b-4473-a84b-ef66fda07343&lang=ru_RU"></script>
     <script src="script.js" defer></script>
+    
 </head>
 <body>
 <header class="header">
@@ -15,8 +17,8 @@
     <div class="search-container hidden">
         <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
         <div class="form__group flex-container">
-            <input type="text" class="form__input" id="search-input" placeholder="Введите адрес" required="" />
-            <button id="search-button" style="--content: 'НАЙТИ';">
+            <input type="text" class="form__input" id="search-input" name="address" placeholder="Введите адрес" required autocomplete="address" />
+            <button id="search-button" class="button" onclick="handleSearchClick()" style="--content: 'НАЙТИ';">
                 <div class="left"></div>
                 НАЙТИ
                 <div class="right"></div>
@@ -24,23 +26,32 @@
         </div>
     </div>
 </header>
+
 <div class="content hidden">
     <div class="map" id="map"></div>
-
 </div>
+
+
 
 <script>
     let tg = window.Telegram.WebApp;
     tg.expand();
 
-    let userName = tg.initDataUnsafe?.user?.first_name || "user";
-    document.getElementById("greeting").innerText = `Hello, ${userName}`;
+    // Получаем user_id из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('user_id');
+    console.log("User ID from Telegram:", userId); // Для отладки
 
+    // Показываем user_id в интерфейсе (опционально)
+    let userName = tg.initDataUnsafe?.user?.first_name || "User";
+    document.getElementById("greeting").innerText = `Hello, ${userName} (ID: ${userId})`;
+
+    // Анимация и отображение контента
     document.getElementById("greeting").addEventListener("animationend", () => {
         document.querySelector(".search-container").classList.remove("hidden");
         document.querySelector(".content").classList.remove("hidden");
-        ymaps.ready(init); // ИНИЦИАЛИЗАЦИЯ КАРТЫ ИЗ script.js
     });
+</script>
 </script>
 </body>
 </html>
