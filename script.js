@@ -15,6 +15,7 @@ function init() {
 
     myMap.behaviors.enable(['scrollZoom']);
 
+    displayMarkersFromUrl();
     locateUser(geolocation);
 
     myMap.events.add('click', function (e) {
@@ -140,5 +141,79 @@ function locateUser(geolocation) {
 
         const coords = result.geoObjects.get(0).geometry.getCoordinates();
         myMap.setCenter(coords, 15, { duration: 300 });
+    });
+}
+
+function displayMarkersFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const markersJson = urlParams.get('markers');
+
+    if (markersJson) {
+        try {
+            const markers = JSON.parse(markersJson);
+            markers.forEach(marker => {
+                const placemark = new ymaps.Placemark(
+                    [marker.latitude, marker.longitude],
+                    {
+                        balloonContent: `
+                            <div class="placemark-balloon">
+                                <strong>${marker.label}</strong>
+                                <br><strong>Координаты:</strong> ${marker.latitude.toFixed(6)}, ${marker.longitude.toFixed(6)}
+                                <button class="btn btn-yellow" onclick="addToFavorites(${marker.id})">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-bookmark-fill" viewBox="0 0 16 16">
+                                        <path d="M2 2v13.5a.5.5 0 0 0 .74.439L8 13.069l5.26 2.87A.5.5 0 0 0 14 15.5V2a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        `
+                    },
+                    {
+                        preset: 'islands#blueDotIcon',
+                        draggable: false
+                    }
+                );
+                myMap.geoObjects.add(placemark);
+            });
+
+            // Если есть маркеры, центрируем карту на первом маркере
+            if (markers.length > 0) {
+                myMap.setCenter([markers[0].latitude, markers[0].longitude], 12);
+            }
+        } catch (e) {
+            console.error("Ошибка при парсинге маркеров:", e);
+        }
+    }
+}
+
+function addToFavorites(markerId) {
+    const userId = new URLSearchParams(window.location.search).get('user_id');
+
+    if (!userId) {
+        alert("Не удалось определить пользователя");
+        return;
+    }
+
+    // Отправляем запрос к боту для добавления в избранное
+    fetch(`https://api.telegram.org/bot${window.Telegram.WebApp.initData}/addFavorite`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            user_id: userId,
+            marker_id: markerId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert("Место добавлено в избранное!");
+        } else {
+            alert("Ошибка: " + data.message);
+        }
+    })
+    .catch(error => {
+        console.error("Ошибка:", error);
+        alert("Произошла ошибка при добавлении в избранное");
     });
 }
