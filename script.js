@@ -20,7 +20,6 @@ function init() {
 
     myMap.events.add('click', function (e) {
         const coords = e.get('coords');
-        // Форматируем координаты для отображения (6 знаков после запятой)
         const formattedCoords = coords.map(coord => coord.toFixed(6)).join(', ');
 
         ymaps.geocode(coords).then(function (res) {
@@ -34,7 +33,6 @@ function init() {
             const address = firstGeoObject.getAddressLine();
             const name = firstGeoObject.getLocalities().join(', ') || "Неизвестное место";
 
-            // Создаем временную метку
             const placemark = new ymaps.Placemark(coords, {
                 balloonContent: `
                     <div class="placemark-balloon">
@@ -55,13 +53,10 @@ function init() {
                 draggable: false
             });
 
-            // Добавляем метку на карту
             myMap.geoObjects.add(placemark);
 
-            // Открываем балун
             placemark.balloon.open();
 
-            // Удаляем метку после закрытия балуна
             placemark.balloon.events.add('close', function() {
                 myMap.geoObjects.remove(placemark);
             });
@@ -193,27 +188,14 @@ function addToFavorites(markerId) {
         return;
     }
 
-    // Отправляем запрос к боту для добавления в избранное
-    fetch(`https://api.telegram.org/bot${window.Telegram.WebApp.initData}/addFavorite`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            user_id: userId,
-            marker_id: markerId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert("Место добавлено в избранное!");
-        } else {
-            alert("Ошибка: " + data.message);
-        }
-    })
-    .catch(error => {
-        console.error("Ошибка:", error);
-        alert("Произошла ошибка при добавлении в избранное");
-    });
+    // Отправляем данные через WebApp
+    const data = {
+        command: "addFavorite",
+        user_id: userId,
+        marker_id: markerId
+    };
+
+    window.Telegram.WebApp.sendData(JSON.stringify(data));
+    alert("Место добавлено в избранное!");
+}
 }
