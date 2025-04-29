@@ -1,9 +1,21 @@
 let myMap;
+
+// Выводим полную информацию о URL и параметрах
+console.log("Полная информация о запуске:");
+console.log("Window location:", window.location.toString());
+console.log("Window location href:", window.location.href);
+console.log("Window location search:", window.location.search);
+console.log("Telegram WebApp initData:", Telegram.WebApp.initData);
+console.log("Telegram WebApp initDataUnsafe:", Telegram.WebApp.initDataUnsafe);
+
+// Получаем параметры из URL
 const urlParams = new URLSearchParams(window.location.search);
 const userId = urlParams.get('user_id');
 const markersData = urlParams.get('markers');
 
-console.log("User ID from URL:", userId);
+console.log("Извлеченные параметры:");
+console.log("user_id:", userId);
+console.log("markers:", markersData);
 
 ymaps.ready(init);
 
@@ -43,7 +55,7 @@ function init() {
 function addMarkersToMap(markers) {
     markers.forEach(marker => {
         const coords = [marker.latitude, marker.longitude];
-        
+
         new ymaps.Placemark(coords, {
             balloonContent: `
                 <div class="placemark-balloon">
@@ -67,7 +79,7 @@ function addMarkersToMap(markers) {
 function handleMapClick(e) {
     const coords = e.get('coords');
     const formattedCoords = coords.map(coord => coord.toFixed(6)).join(', ');
-    
+
     ymaps.geocode(coords).then(function (res) {
         const firstGeoObject = res.geoObjects.get(0);
         if (!firstGeoObject) {
@@ -102,7 +114,7 @@ function handleMapClick(e) {
 
         myMap.geoObjects.add(placemark);
         placemark.balloon.open();
-        
+
         placemark.balloon.events.add('close', function() {
             myMap.geoObjects.remove(placemark);
         });
