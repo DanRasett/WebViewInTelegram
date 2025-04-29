@@ -225,3 +225,26 @@ body, html {
   button {
     flex-shrink: 0;
   }
+
+  .placemark-balloon {
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      color: #333;
+  }
+
+  .placemark-balloon strong {
+      color: #0066cc;
+  }
+
+  .btn-yellow {
+      background-color: #ffcc00;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 5px;
+  }
+
+  .btn-yellow:hover {
+      background-color: #ffdb4d;
+  }
