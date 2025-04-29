@@ -37,6 +37,12 @@
     let tg = window.Telegram.WebApp;
     tg.expand();
 
+    tg.enableClosingConfirmation();
+
+    tg.onEvent('viewportChanged', () => {
+        tg.expand();
+    });
+
     // Получаем user_id из URL
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('user_id');
