@@ -26,7 +26,7 @@ body, html {
 
 .map {
     width: 100%;
-    height: calc(100vh - 60px); /* Высота карты с учетом высоты заголовка */
+    height: calc(100vh - 60px);
     background-color: #333;
 }
 
@@ -40,7 +40,7 @@ body, html {
     padding: 10px 20px;
     border-radius: 5px;
     animation: slideUp 3s ease-in-out forwards;
-    background-color: transparent; /* Убираем задний фон */
+    background-color: transparent;
 }
 
 .header {
@@ -50,7 +50,7 @@ body, html {
     padding: 20px 0;
     position: relative;
     z-index: 1;
-    height: auto; /* Высота заголовка подстраивается под содержимое */
+    height: auto;
 }
 
 .search-container.hidden, .content.hidden {
@@ -78,7 +78,7 @@ body, html {
     }
 }
 
-button {
+.button {
     position:relative;
     padding: 20px 10px;
     border: none;
@@ -215,13 +215,13 @@ button {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px; /* Регулируйте это значение по необходимости */
+    gap: 10px;
   }
 
   .form__input {
-    flex: 1; /* Позволяет полю ввода занимать доступное пространство */
+    flex: 1;
   }
 
   button {
-    flex-shrink: 0; /* Предотвращает уменьшение кнопки */
+    flex-shrink: 0;
   }
