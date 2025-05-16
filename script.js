@@ -147,13 +147,12 @@ function displayMarkersFromUrl() {
                             <div style="padding: 10px; max-width: 250px">
                                 <strong>${marker.label}</strong>
                                 <div style="margin: 5px 0">Координаты: ${marker.latitude.toFixed(6)}, ${marker.longitude.toFixed(6)}</div>
-                                <br><button class="btn btn-yellow" onclick="addToFavorites(1)">
-                                        <div class="balonbut">
-                                            Добавить в избранное
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-bookmark-fill" viewBox="0 0 16 16">
-                                                <path d="M2 2v13.5a.5.5 0 0 0 .74.439L8 13.069l5.26 2.87A.5.5 0 0 0 14 15.5V2a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
-                                            </svg>
-                                        </div>
+                                <button onclick="addToFavorites(${marker.id})"
+                                        style="background:rgb(218, 221, 25); color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer">
+                                    Добавить в избранное
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-bookmark-fill" viewBox="0 0 16 16">
+                                        <path d="M2 2v13.5a.5.5 0 0 0 .74.439L8 13.069l5.26 2.87A.5.5 0 0 0 14 15.5V2a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
+                                    </svg>
                                 </button>
                             </div>
                         `
