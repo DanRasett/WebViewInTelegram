@@ -1,5 +1,7 @@
+const SERVER_URL = 'http://localhost:8080/api';
 let myMap;
-console.log("User ID from URL:", new URLSearchParams(window.location.search).get('user_id'));
+
+// Инициализация карты
 ymaps.ready(init);
 
 function init() {
@@ -15,20 +17,74 @@ function init() {
 
     myMap.behaviors.enable(['scrollZoom']);
 
-    displayMarkersFromUrl();
+    loadMarkersFromServer();
     locateUser(geolocation);
 
-    myMap.events.add('click', function (e) {
+    setupMapClickHandler();
+    setupSearchHandler();
+}
+
+// Загрузка маркеров с сервера
+function loadMarkersFromServer() {
+    fetch(`${SERVER_URL}/markers`)
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(markers => {
+            displayMarkers(markers);
+            if (markers.length > 0) {
+                myMap.setCenter([markers[0].latitude, markers[0].longitude], 12);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading markers:', error);
+            Telegram.WebApp.showAlert("Ошибка загрузки маркеров");
+        });
+}
+
+// Отображение маркеров на карте
+function displayMarkers(markers) {
+    markers.forEach(marker => {
+        const placemark = new ymaps.Placemark(
+            [marker.latitude, marker.longitude],
+            {
+                balloonContent: `
+                    <div style="padding: 10px; max-width: 250px">
+                        <strong>${marker.label}</strong>
+                        <div style="margin: 5px 0">
+                            Координаты: ${marker.latitude.toFixed(6)}, ${marker.longitude.toFixed(6)}
+                        </div>
+                        <button onclick="addToFavorites(${marker.id})"
+                                style="background: #4CAF50; color: white; border: none; 
+                                       padding: 8px 12px; border-radius: 4px; cursor: pointer">
+                            Добавить в избранное
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
+                                 fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M2 2v13.5a.5.5 0 0 0 .74.439L8 13.069l5.26 2.87A.5.5 0 0 0 14 15.5V2a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
+                            </svg>
+                        </button>
+                    </div>
+                `
+            },
+            {
+                preset: 'islands#blueDotIcon',
+                draggable: false
+            }
+        );
+        myMap.geoObjects.add(placemark);
+    });
+}
+
+// Обработчик клика по карте
+function setupMapClickHandler() {
+    myMap.events.add('click', function(e) {
         const coords = e.get('coords');
         const formattedCoords = coords.map(coord => coord.toFixed(6)).join(', ');
 
-        ymaps.geocode(coords).then(function (res) {
+        ymaps.geocode(coords).then(function(res) {
             const firstGeoObject = res.geoObjects.get(0);
-
-            if (!firstGeoObject) {
-                alert("Не удалось определить объект по координатам");
-                return;
-            }
+            if (!firstGeoObject) return;
 
             const address = firstGeoObject.getAddressLine();
             const name = firstGeoObject.getLocalities().join(', ') || "Неизвестное место";
@@ -47,7 +103,6 @@ function init() {
             });
 
             myMap.geoObjects.add(placemark);
-
             placemark.balloon.open();
 
             placemark.balloon.events.add('close', function() {
@@ -55,40 +110,38 @@ function init() {
             });
         });
     });
+}
 
+// Обработчик поиска
+function setupSearchHandler() {
     document.getElementById("search-button").addEventListener("click", () => {
         const query = document.getElementById("search-input").value.trim();
-
         if (!query) {
-            alert("Введите запрос для поиска.");
+            Telegram.WebApp.showAlert("Введите запрос для поиска");
             return;
         }
 
-        ymaps.geocode(query).then(function (res) {
+        ymaps.geocode(query).then(function(res) {
             if (!res || res.geoObjects.getLength() === 0) {
-                alert("Ничего не найдено ");
+                Telegram.WebApp.showAlert("Ничего не найдено");
                 return;
             }
 
             const firstGeoObject = res.geoObjects.get(0);
-
             if (!firstGeoObject.geometry) {
-                alert("Объект найден, но координаты отсутствуют.");
+                Telegram.WebApp.showAlert("Объект найден, но координаты отсутствуют");
                 return;
             }
 
             const coords = firstGeoObject.geometry.getCoordinates();
             const formattedCoords = coords.map(coord => coord.toFixed(6)).join(', ');
             const name = firstGeoObject.properties.get('name');
-            const description = firstGeoObject.properties.get('description');
             const address = firstGeoObject.getAddressLine();
-
-            myMap.geoObjects.removeAll();
 
             const placemark = new ymaps.Placemark(coords, {
                 balloonContentHeader: `<strong>${name}</strong>`,
-                balloonContentBody: (description || '') + `<br><strong>Координаты:</strong> ${formattedCoords}`,
-                balloonContentFooter: address,
+                balloonContentBody: `<strong>Адрес:</strong> ${address}<br>
+                                    <strong>Координаты:</strong> ${formattedCoords}`,
                 hintContent: name
             }, {
                 preset: 'islands#blueDotIconWithCaption',
@@ -98,18 +151,19 @@ function init() {
             myMap.geoObjects.add(placemark);
             myMap.setCenter(coords, 17);
             placemark.balloon.open();
-        }).catch(function (error) {
+        }).catch(function(error) {
             console.error("Ошибка геокодера:", error);
-            alert("Произошла ошибка при поиске.");
+            Telegram.WebApp.showAlert("Произошла ошибка при поиске");
         });
     });
 }
 
+// Определение местоположения пользователя
 function locateUser(geolocation) {
     geolocation.get({
         provider: 'yandex',
         mapStateAutoApply: true
-    }).then(function (result) {
+    }).then(function(result) {
         result.geoObjects.options.set('preset', 'islands#redCircleIcon');
         result.geoObjects.get(0).properties.set({
             balloonContentBody: 'Ваше местоположение (по IP)'
@@ -120,7 +174,7 @@ function locateUser(geolocation) {
     geolocation.get({
         provider: 'browser',
         mapStateAutoApply: false
-    }).then(function (result) {
+    }).then(function(result) {
         result.geoObjects.options.set('preset', 'islands#blueCircleIcon');
         result.geoObjects.get(0).properties.set({
             balloonContentBody: 'Ваше местоположение (по GPS/браузеру)'
@@ -132,74 +186,50 @@ function locateUser(geolocation) {
     });
 }
 
-function displayMarkersFromUrl() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const markersJson = urlParams.get('markers');
-
-    if (markersJson) {
-        try {
-            const markers = JSON.parse(markersJson);
-            markers.forEach(marker => {
-                const placemark = new ymaps.Placemark(
-                    [marker.latitude, marker.longitude],
-                    {
-                        balloonContent: `
-                            <div style="padding: 10px; max-width: 250px">
-                                <strong>${marker.label}</strong>
-                                <div style="margin: 5px 0">Координаты: ${marker.latitude.toFixed(6)}, ${marker.longitude.toFixed(6)}</div>
-                                <button onclick="addToFavorites(${marker.id})"
-                                        style="background:rgb(218, 221, 25); color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer">
-                                    Добавить в избранное
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-bookmark-fill" viewBox="0 0 16 16">
-                                        <path d="M2 2v13.5a.5.5 0 0 0 .74.439L8 13.069l5.26 2.87A.5.5 0 0 0 14 15.5V2a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        `
-                    },
-                    {
-                        preset: 'islands#blueDotIcon',
-                        draggable: false
-                    }
-                );
-                myMap.geoObjects.add(placemark);
-            });
-
-            // Если есть маркеры, центрируем карту на первом маркере
-            if (markers.length > 0) {
-                myMap.setCenter([markers[0].latitude, markers[0].longitude], 12);
-            }
-        } catch (e) {
-            console.error("Ошибка при парсинге маркеров:", e);
-        }
-    }
-}
-
+// Добавление в избранное
 function addToFavorites(markerId) {
     const tg = window.Telegram.WebApp;
-    const userId = new URLSearchParams(window.location.search).get('user_id');
-    alert("Место добавлено в избранное!");
+    const userId = tg.initDataUnsafe?.user?.id || new URLSearchParams(window.location.search).get('user_id');
 
     if (!userId) {
         tg.showAlert("Не удалось определить пользователя");
         return;
     }
 
-    // Отправляем данные через WebApp
-    const data = {
-        command: "addFavorite",
-        user_id: parseInt(userId),
-        marker_id: parseInt(markerId)
-    };
-
-    // Показываем подтверждение перед отправкой
     tg.showConfirm("Добавить это место в избранное?", (confirmed) => {
         if (confirmed) {
-            tg.sendData(JSON.stringify(data));
-            tg.showAlert("Место добавлено в избранное!", () => {
-                // Закрываем балун после добавления
+            fetch(`${SERVER_URL}/favorites?userId=${userId}&markerId=${markerId}`, {
+                method: 'POST'
+            })
+            .then(response => {
+                if (response.ok) return response.text();
+                throw new Error(response.statusText);
+            })
+            .then(message => {
+                tg.showAlert(message || "Место добавлено в избранное!");
                 myMap.balloon.close();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                tg.showAlert("Ошибка: " + (error.message || "Не удалось добавить в избранное"));
             });
         }
     });
 }
+
+// Инициализация Telegram WebApp
+function initTelegramWebApp() {
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.enableClosingConfirmation();
+
+    const userId = tg.initDataUnsafe?.user?.id;
+    const userName = tg.initDataUnsafe?.user?.first_name || "Пользователь";
+    
+    document.getElementById("greeting").textContent = `Привет, ${userName}!`;
+    document.querySelector(".search-container").classList.remove("hidden");
+    document.querySelector(".content").classList.remove("hidden");
+}
+
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', initTelegramWebApp);
