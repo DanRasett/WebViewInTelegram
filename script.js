@@ -83,7 +83,7 @@ function init() {
             const description = firstGeoObject.properties.get('description');
             const address = firstGeoObject.getAddressLine();
 
-
+            myMap.geoObjects.removeAll();
 
             const placemark = new ymaps.Placemark(coords, {
                 balloonContentHeader: `<strong>${name}</strong>`,
