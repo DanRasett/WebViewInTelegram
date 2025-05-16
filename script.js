@@ -144,9 +144,9 @@ function displayMarkersFromUrl() {
                     [marker.latitude, marker.longitude],
                     {
                         balloonContent: `
-                            <div class="placemark-balloon">
-                                <br>${address}
-                                <br><strong>Координаты:</strong> ${formattedCoords}
+                            <div style="padding: 10px; max-width: 250px">
+                                <strong>${marker.label}</strong>
+                                <div style="margin: 5px 0">Координаты: ${marker.latitude.toFixed(6)}, ${marker.longitude.toFixed(6)}</div>
                                 <br><button class="btn btn-yellow" onclick="addToFavorites(1)">
                                     <div class="balonbut">
                                         Добавить в избранное
