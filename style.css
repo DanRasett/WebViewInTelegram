@@ -192,3 +192,64 @@ body, html {
     transition: all 0.3s;
     transform: translateY(0rem);
   }
+
+
+  .form__input {
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+    font-size: 1.2rem;
+      margin: 0 auto;
+    padding: 1.5rem 2rem;
+    border-radius: 0.2rem;
+    background-color: rgb(255, 255, 255);
+    border: none;
+    width: 90%;
+    display: block;
+    border-bottom: 0.3rem solid transparent;
+    transition: all 0.3s;
+  }
+
+  .form__input:placeholder-shown + .form__label {
+    opacity: 0;
+    visibility: hidden;
+    -webkit-transform: translateY(-4rem);
+    transform: translateY(-4rem);
+  }
+
+  .flex-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .form__input {
+    flex: 1;
+  }
+
+  button {
+    flex-shrink: 0;
+  }
+
+  .placemark-balloon {
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      color: #333;
+  }
+
+  .placemark-balloon strong {
+      color: #0066cc;
+  }
+
+  .btn-yellow {
+      background-color: #ffcc00;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 5px;
+  }
+
+  .btn-yellow:hover {
+      background-color: #ffdb4d;
+  }
