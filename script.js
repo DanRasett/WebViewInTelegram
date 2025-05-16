@@ -39,7 +39,6 @@ function init() {
                         <strong>${name}</strong>
                         <br>${address}
                         <br><strong>Координаты:</strong> ${formattedCoords}
-                        die мне пачуствовать тебяяя. твое тело мелким током разливается в моих губуаэах.
                     </div>
                 `
             }, {
