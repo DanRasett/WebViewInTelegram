@@ -117,7 +117,6 @@ function locateUser(geolocation) {
         myMap.geoObjects.add(result.geoObjects);
     });
 
-
     geolocation.get({
         provider: 'browser',
         mapStateAutoApply: false
@@ -206,4 +205,3 @@ function addToFavorites(markerId) {
         }
     });
 }
-
