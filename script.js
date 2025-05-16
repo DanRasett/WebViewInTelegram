@@ -147,7 +147,7 @@ function displayMarkersFromUrl() {
                             <div style="padding: 10px; max-width: 250px">
                                 <strong>${marker.label}</strong>
                                 <div style="margin: 5px 0">Координаты: ${marker.latitude.toFixed(6)}, ${marker.longitude.toFixed(6)}</div>
-                                <br><button class="btn btn-yellow" onclick="addToFavorites(${marker.id})">
+                                <br><button class="btn btn-yellow" onclick="addToFavorites(1)">
                                         <div class="balonbut">
                                             Добавить в избранное
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-bookmark-fill" viewBox="0 0 16 16">
