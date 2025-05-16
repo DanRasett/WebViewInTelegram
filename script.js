@@ -145,7 +145,6 @@ function displayMarkersFromUrl() {
                     {
                         balloonContent: `
                             <div class="placemark-balloon">
-                                <br>${name}
                                 <br>${address}
                                 <br><strong>Координаты:</strong> ${formattedCoords}
                                 <br><button class="btn btn-yellow" onclick="addToFavorites(1)">
