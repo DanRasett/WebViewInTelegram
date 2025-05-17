@@ -1,4 +1,4 @@
-const SERVER_URL = 'https://harmfully-graced-whale.cloudpub.ru/';
+const SERVER_URL = 'https://harmfully-graced-whale.cloudpub.ru/api';
 let myMap;
 
 // Инициализация карты
