@@ -1,4 +1,4 @@
-const SERVER_URL = 'http://localhost:8080/api';
+const SERVER_URL = 'https://harmfully-graced-whale.cloudpub.ru/';
 let myMap;
 
 // Инициализация карты
