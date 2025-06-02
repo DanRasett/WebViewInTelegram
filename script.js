@@ -42,10 +42,29 @@ function loadMarkersFromServer() {
             Telegram.WebApp.showAlert("Ошибка загрузки маркеров");
         });
 }
-
+// Проверка маркеров через API
+async function isMarkerFavorite(userId, markerId) {
+    try {
+        const response = await fetch(`${SERVER_URL}/favorites?userId=${userId}&markerId=${markerId}`, {
+            method: 'GET'
+        });
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        return data.isFavorite; // Предполагается, что сервер возвращает объект с полем isFavorite
+    } catch (error) {
+        console.error('Error fetching favorite status:', error);
+        return false;
+    }
+}
 // Отображение маркеров на карте
-function displayMarkers(markers) {
-    markers.forEach(marker => {
+async function displayMarkers(markers) {
+    const tg = window.Telegram.WebApp;
+    const userId = tg.initDataUnsafe?.user?.id || new URLSearchParams(window.location.search).get('user_id');
+
+    for (const marker of markers) {
+        const isFavorite = await isMarkerFavorite(userId, marker.id);
         const placemark = new ymaps.Placemark(
             [marker.latitude, marker.longitude],
             {
@@ -56,7 +75,7 @@ function displayMarkers(markers) {
                             Координаты: ${marker.latitude.toFixed(6)}, ${marker.longitude.toFixed(6)}
                         </div>
                         <label class="checkbox-btn">
-                                <input type="checkbox" onchange="handleCheckboxChange(this, ${marker.id})">
+                                <input type="checkbox" onchange="handleCheckboxChange(this, ${marker.id}) ${isFavorite ? 'checked' : ''}">
                                 <div>
                                     <span class="unchecked-text">
                                         Добавить в избранное
@@ -80,7 +99,7 @@ function displayMarkers(markers) {
             }
         );
         myMap.geoObjects.add(placemark);
-    });
+    };
 }
 
 // Обработчик клика по карте
