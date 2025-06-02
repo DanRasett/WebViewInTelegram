@@ -229,26 +229,23 @@ function addToFavorites(markerId) {
         tg.showAlert("Не удалось определить пользователя");
         return;
     }
-
-    tg.showConfirm("Добавить это место в избранное?", (confirmed) => {
-        if (confirmed) {
-            fetch(`${SERVER_URL}/favorites?userId=${userId}&markerId=${markerId}`, {
-                method: 'POST'
-            })
-            .then(response => {
-                if (response.ok) return response.text();
-                throw new Error(response.statusText);
-            })
-            .then(message => {
-                tg.showAlert(message || "Место добавлено в избранное!");
-                
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                tg.showAlert("Ошибка: " + (error.message || "Не удалось добавить в избранное"));
-            });
-        }
+    fetch(`${SERVER_URL}/favorites?userId=${userId}&markerId=${markerId}`, {
+        method: 'POST'
+    })
+    .then(response => {
+        if (response.ok) return response.text();
+        throw new Error(response.statusText);
+    })
+    .then(message => {
+        tg.showAlert(message || "Место добавлено в избранное!");
+        
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        tg.showAlert("Ошибка: " + (error.message || "Не удалось добавить в избранное"));
     });
+        
+    ;
 }
 
 function DeleteFromFavorites(markerId) {
@@ -258,27 +255,25 @@ function DeleteFromFavorites(markerId) {
     if (!userId) {
         tg.showAlert("Не удалось определить пользователя");
         return;
-    }
-
-    tg.showConfirm("Удалить место из избранного?", (confirmed) => {
-        if (confirmed) {
-            fetch(`${SERVER_URL}/favorites?userId=${userId}&markerId=${markerId}`, {
-                method: 'DELETE'
-            })
-            .then(response => {
-                if (response.ok) return response.text();
-                throw new Error(response.statusText);
-            })
-            .then(message => {
-                tg.showAlert(message || "Место удалено из избранного!");
-                
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                tg.showAlert("Ошибка: " + (error.message || "Не удалось удалить объект из избранного"));
-            });
-        }
+    }  
+        
+    fetch(`${SERVER_URL}/favorites?userId=${userId}&markerId=${markerId}`, {
+        method: 'DELETE'
+    })
+    .then(response => {
+        if (response.ok) return response.text();
+        throw new Error(response.statusText);
+    })
+    .then(message => {
+        tg.showAlert(message || "Место удалено из избранного!");
+        
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        tg.showAlert("Ошибка: " + (error.message || "Не удалось удалить объект из избранного"));
     });
+        
+    ;
 }
 
 // Инициализация Telegram WebApp
