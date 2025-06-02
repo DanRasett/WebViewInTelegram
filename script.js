@@ -222,7 +222,7 @@ function addToFavorites(markerId) {
             })
             .then(message => {
                 tg.showAlert(message || "Место добавлено в избранное!");
-                myMap.balloon.close();
+                
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -252,7 +252,7 @@ function DeleteFromFavorites(markerId) {
             })
             .then(message => {
                 tg.showAlert(message || "Место удалено из избранного!");
-                myMap.balloon.close();
+                
             })
             .catch(error => {
                 console.error('Error:', error);
