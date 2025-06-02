@@ -75,7 +75,7 @@ async function displayMarkers(markers) {
                             Координаты: ${marker.latitude.toFixed(6)}, ${marker.longitude.toFixed(6)}
                         </div>
                         <label class="checkbox-btn">
-                                <input type="checkbox" onchange="handleCheckboxChange(this, ${marker.id}) ${isFavorite ? 'checked' : ''}">
+                                <input type="checkbox" onchange="handleCheckboxChange(this, ${marker.id})" ${isFavorite ? 'checked' : ''}>
                                 <div>
                                     <span class="unchecked-text">
                                         Добавить в избранное
