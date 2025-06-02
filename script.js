@@ -57,6 +57,9 @@ async function isMarkerFavorite(userId, markerId) {
 
         // Предполагается, что сервер возвращает объект с полем favorites, содержащим список markerId
         const favorites = data.favorites || []; // Получаем список избранных маркеров
+        alert("Cписок фаворитов: " + data.favorites + "\n" +
+            "Булево значение: " + favorites.includes(markerId)
+        );
         return favorites.includes(markerId); // Проверяем, содержится ли markerId в списке избранных
     } catch (error) {
         console.error('Error fetching favorite status:', error);
