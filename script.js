@@ -55,16 +55,23 @@ function displayMarkers(markers) {
                         <div style="margin: 5px 0">
                             Координаты: ${marker.latitude.toFixed(6)}, ${marker.longitude.toFixed(6)}
                         </div>
-                        <button onclick="addToFavorites(${marker.id})"
-                                style="background: #4CAF50; color: white; border: none; 
-                                       padding: 8px 12px; border-radius: 4px; cursor: pointer">
-                            Добавить в избранное
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
-                                 fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M2 2v13.5a.5.5 0 0 0 .74.439L8 13.069l5.26 2.87A.5.5 0 0 0 14 15.5V2a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
-                            </svg>
-                        </button>
+                        <label class="checkbox-btn">
+                                <input type="checkbox" onchange="handleCheckboxChange(this, ${marker.id})">
+                                <div>
+                                    <span class="unchecked-text">
+                                        Добавить в избранное
+                                    </span>
+                                    <span class="checked-text">
+                                        В избранном
+                                    </span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
+                                        fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M2 2v13.5a.5.5 0 0 0 .74.439L8 13.069l5.26 2.87A.5.5 0 0 0 14 15.5V2a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
+                                    </svg>
+                                </div>
+                        </label>
                     </div>
+
                 `
             },
             {
@@ -187,6 +194,14 @@ function locateUser(geolocation) {
 }
 
 // Добавление в избранное
+function handleCheckboxChange(checkbox, markerId) {
+            if (checkbox.checked) {
+                addToFavorites(markerId);
+            } else {
+                DeleteFromFavorites(markerId);
+            }
+        }
+
 function addToFavorites(markerId) {
     const tg = window.Telegram.WebApp;
     const userId = tg.initDataUnsafe?.user?.id || new URLSearchParams(window.location.search).get('user_id');
@@ -212,6 +227,36 @@ function addToFavorites(markerId) {
             .catch(error => {
                 console.error('Error:', error);
                 tg.showAlert("Ошибка: " + (error.message || "Не удалось добавить в избранное"));
+            });
+        }
+    });
+}
+
+function DeleteFromFavorites(markerId) {
+    const tg = window.Telegram.WebApp;
+    const userId = tg.initDataUnsafe?.user?.id || new URLSearchParams(window.location.search).get('user_id');
+
+    if (!userId) {
+        tg.showAlert("Не удалось определить пользователя");
+        return;
+    }
+
+    tg.showConfirm("Удалить место из избранного?", (confirmed) => {
+        if (confirmed) {
+            fetch(`${SERVER_URL}/favorites?userId=${userId}&markerId=${markerId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) return response.text();
+                throw new Error(response.statusText);
+            })
+            .then(message => {
+                tg.showAlert(message || "Место удалено из избранного!");
+                myMap.balloon.close();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                tg.showAlert("Ошибка: " + (error.message || "Не удалось удалить объект из избранного"));
             });
         }
     });
