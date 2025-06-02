@@ -45,24 +45,16 @@ function loadMarkersFromServer() {
 // Проверка маркеров через API
 async function isMarkerFavorite(userId, markerId) {
     try {
-        const response = await fetch(`${SERVER_URL}/favorites?userId=${userId}`, {
-            method: 'GET'
-        });
-
+        const response = await fetch(`${SERVER_URL}/favorites?userId=${userId}`);
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            return false;
         }
-
         const data = await response.json();
 
-        // Предполагается, что сервер возвращает объект с полем favorites, содержащим список markerId
-        const favorites = data.favorites || []; // Получаем список избранных маркеров
-        alert("Cписок фаворитов: " + data.favorites + "\n" +
-            "Булево значение: " + favorites.includes(markerId)
-        );
-        return favorites.includes(markerId); // Проверяем, содержится ли markerId в списке избранных
+        // Предполагается, что сервер возвращает массив объектов с marker_id
+        return data.some(marker => marker.marker_id === markerId);
     } catch (error) {
-        console.error('Error fetching favorite status:', error);
+        alert("Error")
         return false;
     }
 }
