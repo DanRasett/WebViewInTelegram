@@ -1,10 +1,29 @@
 const SERVER_URL = 'https://harmfully-graced-whale.cloudpub.ru/api';
+let tg = window.Telegram.WebApp;
 let myMap;
 
-// Инициализация карты
-ymaps.ready(init);
+document.addEventListener('DOMContentLoaded', initApp);
 
-function init() {
+function initApp() {
+    initTelegramWebApp();
+    document.getElementById('search-input').addEventListener('focus', loadFavorites);
+    document.getElementById('search-button').addEventListener('click', handleSearchClick);
+    ymaps.ready(initMap);
+}
+
+function initTelegramWebApp() {
+    tg.expand();
+    tg.enableClosingConfirmation();
+
+    const userId = tg.initDataUnsafe?.user?.id;
+    const userName = tg.initDataUnsafe?.user?.first_name || "Пользователь";
+
+    document.getElementById("greeting").textContent = `Привет, ${userName}!`;
+    document.querySelector(".search-container").classList.remove("hidden");
+    document.querySelector(".content").classList.remove("hidden");
+}
+
+function initMap() {
     let geolocation = ymaps.geolocation;
 
     myMap = new ymaps.Map('map', {
@@ -19,12 +38,9 @@ function init() {
 
     loadMarkersFromServer();
     locateUser(geolocation);
-
     setupMapClickHandler();
-    setupSearchHandler();
 }
 
-// Загрузка маркеров с сервера
 function loadMarkersFromServer() {
     fetch(`${SERVER_URL}/markers`)
         .then(response => {
@@ -39,70 +55,83 @@ function loadMarkersFromServer() {
         })
         .catch(error => {
             console.error('Error loading markers:', error);
-            Telegram.WebApp.showAlert("Ошибка загрузки маркеров");
+            tg.showAlert("Ошибка загрузки маркеров");
         });
 }
-// Проверка маркеров через API
-async function isMarkerFavorite(userId, markerId) {
+
+async function loadFavorites() {
+    const userId = tg.initDataUnsafe?.user?.id || new URLSearchParams(window.location.search).get('user_id');
+    if (!userId) {
+        console.error('User ID not found');
+        return;
+    }
+
     try {
         const response = await fetch(`${SERVER_URL}/favorites?userId=${userId}`);
         if (!response.ok) {
-            return false;
+            throw new Error('Network response was not ok');
         }
-        const data = await response.json();
-
-        // Предполагается, что сервер возвращает массив объектов с marker_id
-        return data.some(marker => marker.marker_id === markerId);
+        const favorites = await response.json();
+        populateDatalist(favorites);
     } catch (error) {
-        alert("Error")
-        return false;
+        console.error('Error loading favorites:', error);
     }
 }
-// Отображение маркеров на карте
-async function displayMarkers(markers) {
-    const tg = window.Telegram.WebApp;
-    const userId = tg.initDataUnsafe?.user?.id || new URLSearchParams(window.location.search).get('user_id');
 
-    for (const marker of markers) {
-        const isFavorite = await isMarkerFavorite(userId, marker.id);
-        const placemark = new ymaps.Placemark(
-            [marker.latitude, marker.longitude],
-            {
-                balloonContent: `
-                    <div style="padding: 10px; max-width: 250px">
-                        <strong>${marker.label}</strong>
-                        <div style="margin: 5px 0">
-                            Координаты: ${marker.latitude.toFixed(6)}, ${marker.longitude.toFixed(6)}
-                        </div>
-                        <label class="checkbox-btn">
-                                <input type="checkbox" onchange="handleCheckboxChange(this, ${marker.id})" ${isFavorite ? 'checked' : ''}>
-                                <div>
-                                    <span class="unchecked-text">
-                                        Добавить в избранное
-                                    </span>
-                                    <span class="checked-text">
-                                        В избранном
-                                    </span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
-                                        fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M2 2v13.5a.5.5 0 0 0 .74.439L8 13.069l5.26 2.87A.5.5 0 0 0 14 15.5V2a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
-                                    </svg>
-                                </div>
-                        </label>
-                    </div>
+function populateDatalist(favorites) {
+    const datalist = document.getElementById('address-suggestions');
+    datalist.innerHTML = '';
 
-                `
-            },
-            {
-                preset: 'islands#blueDotIcon',
-                draggable: false
-            }
-        );
-        myMap.geoObjects.add(placemark);
-    };
+    favorites.forEach(favorite => {
+        const option = document.createElement('option');
+        option.value = favorite.label;
+        datalist.appendChild(option);
+    });
 }
 
-// Обработчик клика по карте
+function handleSearchClick() {
+    const query = document.getElementById("search-input").value.trim();
+    if (!query) {
+        tg.showAlert("Введите запрос для поиска");
+        return;
+    }
+
+    ymaps.geocode(query).then(function(res) {
+        if (!res || res.geoObjects.getLength() === 0) {
+            tg.showAlert("Ничего не найдено");
+            return;
+        }
+
+        const firstGeoObject = res.geoObjects.get(0);
+        if (!firstGeoObject.geometry) {
+            tg.showAlert("Объект найден, но координаты отсутствуют");
+            return;
+        }
+
+        const coords = firstGeoObject.geometry.getCoordinates();
+        const formattedCoords = coords.map(coord => coord.toFixed(6)).join(', ');
+        const name = firstGeoObject.properties.get('name');
+        const address = firstGeoObject.getAddressLine();
+
+        const placemark = new ymaps.Placemark(coords, {
+            balloonContentHeader: `<strong>${name}</strong>`,
+            balloonContentBody: `<strong>Адрес:</strong> ${address}<br>
+                                <strong>Координаты:</strong> ${formattedCoords}`,
+            hintContent: name
+        }, {
+            preset: 'islands#blueDotIconWithCaption',
+            openBalloonOnClick: true
+        });
+
+        myMap.geoObjects.add(placemark);
+        myMap.setCenter(coords, 17);
+        placemark.balloon.open();
+    }).catch(function(error) {
+        console.error("Ошибка геокодера:", error);
+        tg.showAlert("Произошла ошибка при поиске");
+    });
+}
+
 function setupMapClickHandler() {
     myMap.events.add('click', function(e) {
         const coords = e.get('coords');
@@ -138,53 +167,6 @@ function setupMapClickHandler() {
     });
 }
 
-// Обработчик поиска
-function setupSearchHandler() {
-    document.getElementById("search-button").addEventListener("click", () => {
-        const query = document.getElementById("search-input").value.trim();
-        if (!query) {
-            Telegram.WebApp.showAlert("Введите запрос для поиска");
-            return;
-        }
-
-        ymaps.geocode(query).then(function(res) {
-            if (!res || res.geoObjects.getLength() === 0) {
-                Telegram.WebApp.showAlert("Ничего не найдено");
-                return;
-            }
-
-            const firstGeoObject = res.geoObjects.get(0);
-            if (!firstGeoObject.geometry) {
-                Telegram.WebApp.showAlert("Объект найден, но координаты отсутствуют");
-                return;
-            }
-
-            const coords = firstGeoObject.geometry.getCoordinates();
-            const formattedCoords = coords.map(coord => coord.toFixed(6)).join(', ');
-            const name = firstGeoObject.properties.get('name');
-            const address = firstGeoObject.getAddressLine();
-
-            const placemark = new ymaps.Placemark(coords, {
-                balloonContentHeader: `<strong>${name}</strong>`,
-                balloonContentBody: `<strong>Адрес:</strong> ${address}<br>
-                                    <strong>Координаты:</strong> ${formattedCoords}`,
-                hintContent: name
-            }, {
-                preset: 'islands#blueDotIconWithCaption',
-                openBalloonOnClick: true
-            });
-
-            myMap.geoObjects.add(placemark);
-            myMap.setCenter(coords, 17);
-            placemark.balloon.open();
-        }).catch(function(error) {
-            console.error("Ошибка геокодера:", error);
-            Telegram.WebApp.showAlert("Произошла ошибка при поиске");
-        });
-    });
-}
-
-// Определение местоположения пользователя
 function locateUser(geolocation) {
     geolocation.get({
         provider: 'yandex',
@@ -212,23 +194,77 @@ function locateUser(geolocation) {
     });
 }
 
-// Добавление в избранное
-function handleCheckboxChange(checkbox, markerId) {
-            if (checkbox.checked) {
-                addToFavorites(markerId);
-            } else {
-                DeleteFromFavorites(markerId);
+async function displayMarkers(markers) {
+    const userId = tg.initDataUnsafe?.user?.id || new URLSearchParams(window.location.search).get('user_id');
+
+    for (const marker of markers) {
+        const isFavorite = await isMarkerFavorite(userId, marker.id);
+        const placemark = new ymaps.Placemark(
+            [marker.latitude, marker.longitude],
+            {
+                balloonContent: `
+                    <div style="padding: 10px; max-width: 250px">
+                        <strong>${marker.label}</strong>
+                        <div style="margin: 5px 0">
+                            Координаты: ${marker.latitude.toFixed(6)}, ${marker.longitude.toFixed(6)}
+                        </div>
+                        <label class="checkbox-btn">
+                            <input type="checkbox" onchange="handleCheckboxChange(this, ${marker.id})" ${isFavorite ? 'checked' : ''}>
+                            <div>
+                                <span class="unchecked-text">
+                                    Добавить в избранное
+                                </span>
+                                <span class="checked-text">
+                                    В избранном
+                                </span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                    fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M2 2v13.5a.5.5 0 0 0 .74.439L8 13.069l5.26 2.87A.5.5 0 0 0 14 15.5V2a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
+                                </svg>
+                            </div>
+                        </label>
+                    </div>
+                `
+            },
+            {
+                preset: 'islands#blueDotIcon',
+                draggable: false
             }
+        );
+        myMap.geoObjects.add(placemark);
+    }
+}
+
+async function isMarkerFavorite(userId, markerId) {
+    try {
+        const response = await fetch(`${SERVER_URL}/favorites?userId=${userId}`);
+        if (!response.ok) {
+            return false;
         }
+        const data = await response.json();
+        return data.some(marker => marker.marker_id === markerId);
+    } catch (error) {
+        console.error('Error:', error);
+        return false;
+    }
+}
+
+function handleCheckboxChange(checkbox, markerId) {
+    if (checkbox.checked) {
+        addToFavorites(markerId);
+    } else {
+        deleteFromFavorites(markerId);
+    }
+}
 
 function addToFavorites(markerId) {
-    const tg = window.Telegram.WebApp;
     const userId = tg.initDataUnsafe?.user?.id || new URLSearchParams(window.location.search).get('user_id');
 
     if (!userId) {
         tg.showAlert("Не удалось определить пользователя");
         return;
     }
+
     fetch(`${SERVER_URL}/favorites?userId=${userId}&markerId=${markerId}`, {
         method: 'POST'
     })
@@ -238,25 +274,21 @@ function addToFavorites(markerId) {
     })
     .then(message => {
         tg.showAlert(message || "Место добавлено в избранное!");
-        
     })
     .catch(error => {
         console.error('Error:', error);
         tg.showAlert("Ошибка: " + (error.message || "Не удалось добавить в избранное"));
     });
-        
-    ;
 }
 
-function DeleteFromFavorites(markerId) {
-    const tg = window.Telegram.WebApp;
+function deleteFromFavorites(markerId) {
     const userId = tg.initDataUnsafe?.user?.id || new URLSearchParams(window.location.search).get('user_id');
 
     if (!userId) {
         tg.showAlert("Не удалось определить пользователя");
         return;
-    }  
-        
+    }
+
     fetch(`${SERVER_URL}/favorites?userId=${userId}&markerId=${markerId}`, {
         method: 'DELETE'
     })
@@ -266,29 +298,9 @@ function DeleteFromFavorites(markerId) {
     })
     .then(message => {
         tg.showAlert(message || "Место удалено из избранного!");
-        
     })
     .catch(error => {
         console.error('Error:', error);
         tg.showAlert("Ошибка: " + (error.message || "Не удалось удалить объект из избранного"));
     });
-        
-    ;
 }
-
-// Инициализация Telegram WebApp
-function initTelegramWebApp() {
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    tg.enableClosingConfirmation();
-
-    const userId = tg.initDataUnsafe?.user?.id;
-    const userName = tg.initDataUnsafe?.user?.first_name || "Пользователь";
-    
-    document.getElementById("greeting").textContent = `Привет, ${userName}!`;
-    document.querySelector(".search-container").classList.remove("hidden");
-    document.querySelector(".content").classList.remove("hidden");
-}
-
-// Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', initTelegramWebApp);
