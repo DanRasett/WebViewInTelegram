@@ -52,7 +52,7 @@ async function isMarkerFavorite(userId, markerId) {
             throw new Error('Network response was not ok');
         }
         const data = await response.json();
-        return data.includes(markerId); // Предполагается, что сервер возвращает объект 
+        return Array.isArray(data) && data.includes(markerId); // Предполагается, что сервер возвращает объект 
     } catch (error) {
         console.error('Error fetching favorite status:', error);
         return false;
