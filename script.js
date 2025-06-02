@@ -45,14 +45,19 @@ function loadMarkersFromServer() {
 // Проверка маркеров через API
 async function isMarkerFavorite(userId, markerId) {
     try {
-        const response = await fetch(`${SERVER_URL}/favorites?userId=${userId}&markerId=${markerId}`, {
+        const response = await fetch(`${SERVER_URL}/favorites?userId=${userId}`, {
             method: 'GET'
         });
+
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
+
         const data = await response.json();
-        return Array.isArray(data) && data.includes(markerId); // Предполагается, что сервер возвращает объект 
+
+        // Предполагается, что сервер возвращает объект с полем favorites, содержащим список markerId
+        const favorites = data.favorites || []; // Получаем список избранных маркеров
+        return favorites.includes(markerId); // Проверяем, содержится ли markerId в списке избранных
     } catch (error) {
         console.error('Error fetching favorite status:', error);
         return false;
