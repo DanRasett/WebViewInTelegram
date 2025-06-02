@@ -89,48 +89,84 @@ function populateDatalist(favorites) {
     });
 }
 
-function handleSearchClick() {
+async function handleSearchClick() {
     const query = document.getElementById("search-input").value.trim();
     if (!query) {
         tg.showAlert("Введите запрос для поиска");
         return;
     }
 
-    ymaps.geocode(query).then(function(res) {
-        if (!res || res.geoObjects.getLength() === 0) {
-            tg.showAlert("Ничего не найдено");
-            return;
+    try {
+        // Выполняем GET-запрос к API для получения данных о маркерах
+        const response = await fetch(`${SERVER_URL}/markers`);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
         }
+        const markers = await response.json();
 
-        const firstGeoObject = res.geoObjects.get(0);
-        if (!firstGeoObject.geometry) {
-            tg.showAlert("Объект найден, но координаты отсутствуют");
-            return;
+        // Ищем маркер с соответствующим именем (label)
+        const matchedMarker = markers.find(marker => marker.label === query);
+
+        if (matchedMarker) {
+            // Если найдено совпадение, используем координаты из базы данных
+            const coords = [matchedMarker.latitude, matchedMarker.longitude];
+
+            // Создаем метку на карте
+            const placemark = new ymaps.Placemark(coords, {
+                balloonContentHeader: `<strong>${matchedMarker.label}</strong>`,
+                balloonContentBody: `<strong>Координаты:</strong> ${coords.join(', ')}`,
+                hintContent: matchedMarker.label
+            }, {
+                preset: 'islands#blueDotIconWithCaption',
+                openBalloonOnClick: true
+            });
+
+            myMap.geoObjects.add(placemark);
+            myMap.setCenter(coords, 17);
+            placemark.balloon.open();
+        } else {
+            // Если совпадение не найдено, выполняем геокодирование введенного запроса
+            ymaps.geocode(query).then(function(res) {
+                if (!res || res.geoObjects.getLength() === 0) {
+                    tg.showAlert("Ничего не найдено");
+                    return;
+                }
+
+                const firstGeoObject = res.geoObjects.get(0);
+                if (!firstGeoObject.geometry) {
+                    tg.showAlert("Объект найден, но координаты отсутствуют");
+                    return;
+                }
+
+                const coords = firstGeoObject.geometry.getCoordinates();
+                const formattedCoords = coords.map(coord => coord.toFixed(6)).join(', ');
+                const name = firstGeoObject.properties.get('name');
+                const address = firstGeoObject.getAddressLine();
+
+                const placemark = new ymaps.Placemark(coords, {
+                    balloonContentHeader: `<strong>${name}</strong>`,
+                    balloonContentBody: `<strong>Адрес:</strong> ${address}<br>
+                                        <strong>Координаты:</strong> ${formattedCoords}`,
+                    hintContent: name
+                }, {
+                    preset: 'islands#blueDotIconWithCaption',
+                    openBalloonOnClick: true
+                });
+
+                myMap.geoObjects.add(placemark);
+                myMap.setCenter(coords, 17);
+                placemark.balloon.open();
+            }).catch(function(error) {
+                console.error("Ошибка геокодера:", error);
+                tg.showAlert("Произошла ошибка при поиске");
+            });
         }
-
-        const coords = firstGeoObject.geometry.getCoordinates();
-        const formattedCoords = coords.map(coord => coord.toFixed(6)).join(', ');
-        const name = firstGeoObject.properties.get('name');
-        const address = firstGeoObject.getAddressLine();
-
-        const placemark = new ymaps.Placemark(coords, {
-            balloonContentHeader: `<strong>${name}</strong>`,
-            balloonContentBody: `<strong>Адрес:</strong> ${address}<br>
-                                <strong>Координаты:</strong> ${formattedCoords}`,
-            hintContent: name
-        }, {
-            preset: 'islands#blueDotIconWithCaption',
-            openBalloonOnClick: true
-        });
-
-        myMap.geoObjects.add(placemark);
-        myMap.setCenter(coords, 17);
-        placemark.balloon.open();
-    }).catch(function(error) {
-        console.error("Ошибка геокодера:", error);
-        tg.showAlert("Произошла ошибка при поиске");
-    });
+    } catch (error) {
+        console.error("Ошибка при выполнении запроса к API:", error);
+        tg.showAlert("Произошла ошибка при выполнении запроса к API");
+    }
 }
+
 
 function setupMapClickHandler() {
     myMap.events.add('click', function(e) {
