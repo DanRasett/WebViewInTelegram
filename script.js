@@ -1,4 +1,4 @@
-const SERVER_URL = 'https://harmfully-graced-whale.cloudpub.ru/api';
+const SERVER_URL = 'https://rserver.cloudpub.ru/api';
 let tg = window.Telegram.WebApp;
 let myMap;
 
